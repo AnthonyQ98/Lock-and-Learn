@@ -119,8 +119,12 @@ func main() {
 	aesKey = generateAESKey(32)
 
 	r := mux.NewRouter()
+
+	// Define the encryption and decryption routes
 	r.HandleFunc("/encrypt", encryptHandler).Methods("POST")
 	r.HandleFunc("/decrypt", decryptHandler).Methods("POST")
+
+	// Define the login route
 
 	r.Use(corsMiddleware)
 
