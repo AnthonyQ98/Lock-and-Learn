@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -46,5 +47,9 @@ func main() {
 	r.HandleFunc("/decrypt", decryptHandler).Methods("POST")
 
 	http.Handle("/", r)
-	http.ListenAndServe(":8080", nil)
+
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		log.Fatalf("error listening on port 8080: %s", err)
+	}
 }
