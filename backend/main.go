@@ -48,6 +48,7 @@ func main() {
 
 	http.Handle("/", r)
 
+	log.Printf("Listening on port 8080")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatalf("error listening on port 8080: %s", err)
