@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import EncryptForm from './components/EncryptForm/EncryptForm';
-import DecryptForm from './components/DecryptForm/DecryptForm';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Home from './components/Pages/Home';
+import EncryptForm from './components/Pages/EncryptPage';
+import DecryptForm from './components/Pages/DecryptPage';
+import UserPage from './components/Pages/UserPage';
 import './App.css';
 
 function App() {
-  const [text, setText] = useState('');
   const [encryptResult, setEncryptResult] = useState('');
   const [decryptResult, setDecryptResult] = useState('');
 
@@ -47,17 +49,16 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <h1>Encrypt and Decrypt Text</h1>
-      <EncryptForm onEncrypt={handleEncrypt} />
-      <DecryptForm onDecrypt={handleDecrypt} />
-      <div className="result">
-        <h2>Encryption Result:</h2>
-        <p>{encryptResult}</p>
-        <h2>Decryption Result:</h2>
-        <p>{decryptResult}</p>
+    <Router>
+      <div className="app">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/encrypt" element={<EncryptForm onEncrypt={handleEncrypt} />} />
+          <Route path="/decrypt" element={<DecryptForm onDecrypt={handleDecrypt} />} />
+          <Route path="/user" element={<UserPage />} />
+        </Routes>
       </div>
-    </div>
+    </Router>
   );
 }
 
