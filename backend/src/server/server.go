@@ -3,8 +3,8 @@ package server
 import (
 	"net/http"
 
-	"github.com/anthonyq98/lock-and-learn/handlers"
-	"github.com/anthonyq98/lock-and-learn/middlewares"
+	"github.com/anthonyq98/lock-and-learn/src/handlers"
+	"github.com/anthonyq98/lock-and-learn/src/middlewares"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 )

@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/anthonyq98/lock-and-learn/server"
-	"github.com/anthonyq98/lock-and-learn/utils"
+	"github.com/anthonyq98/lock-and-learn/src/server"
+	"github.com/anthonyq98/lock-and-learn/src/utils"
 )
 
 var aesKey []byte

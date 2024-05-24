@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/anthonyq98/lock-and-learn/config"
+	"github.com/anthonyq98/lock-and-learn/src/config"
 )
 
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {
