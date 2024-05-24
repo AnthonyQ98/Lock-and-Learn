@@ -1,26 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const UserPage = () => {
-  const [aesKey, setAesKey] = useState('');
+  const location = useLocation();
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    const fetchAesKey = async () => {
+    const queryParams = new URLSearchParams(location.search);
+    const encodedData = queryParams.get('data');
+    
+    if (encodedData) {
       try {
-        const response = await fetch('http://localhost:8080/user/aeskey');
-        const data = await response.json();
-        setAesKey(data.aesKey);
+        const decodedData = decodeURIComponent(encodedData);
+        const parsedData = JSON.parse(decodedData);
+        setUserData(parsedData);
       } catch (error) {
-        console.error('Error fetching AES key:', error);
+        console.error('Error parsing user data:', error);
       }
-    };
-
-    fetchAesKey();
-  }, []);
+    }
+  }, [location.search]);
 
   return (
     <div>
-      <h1>Your AES Key</h1>
-      {aesKey ? <p>{aesKey}</p> : <p>Loading...</p>}
+      <h2>User Page</h2>
+      {userData && (
+        <div>
+          <p>ID: {userData.id}</p>
+          <p>Email: {userData.email}</p>
+          <p>Name: {userData.name}</p>
+          {/* Render other user data as needed */}
+        </div>
+      )}
     </div>
   );
 };

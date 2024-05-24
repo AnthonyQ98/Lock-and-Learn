@@ -1,8 +1,9 @@
-package controllers
+package auth
 
 import (
 	"context"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -10,12 +11,16 @@ import (
 )
 
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received a request to GoogleLogin handler: %v\n", r)
 	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL("randomstate")
+	log.Printf("Client ID: %s\n", config.AppConfig.GoogleLoginConfig.ClientID)
+	log.Printf("url: %s\n", url)
 
 	http.Redirect(w, r, url, http.StatusSeeOther)
 }
 
 func GoogleCallback(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received a request to GoogleCallback handler: %v", r)
 	state := r.URL.Query().Get("state")
 	if state != "randomstate" {
 		http.Error(w, "States don't Match!!", http.StatusBadRequest)
@@ -45,6 +50,9 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect to the profile page with user data as query parameters
-	http.Redirect(w, r, "/profile?data="+url.QueryEscape(string(userData)), http.StatusSeeOther)
+	redirectURL := "http://localhost:3000/user?data=" + url.QueryEscape(string(userData))
+	log.Printf("Redirecturl: %s\n", redirectURL)
+
+	// Redirect to the user page with user data as query parameters
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
