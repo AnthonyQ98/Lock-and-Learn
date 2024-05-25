@@ -1,0 +1,44 @@
+.header {
+    background-color: #333;
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 1000;
+  }
+  
+  .logo-container {
+    margin-right: 20px;
+  }
+  
+  .home-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 20px;
+  }
+  
+  .nav {
+    flex-grow: 1;
+  }
+  
+  .nav-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
+  
+  .nav-item {
+    margin-right: 20px;
+  }
+  
+  .nav-link {
+    color: #fff;
+    text-decoration: none;
+  }
+  
+  .nav-link:hover {
+    text-decoration: underline;
+  }
+  

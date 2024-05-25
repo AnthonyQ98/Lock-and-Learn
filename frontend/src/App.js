@@ -1,14 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './components/Pages/Home';
 import EncryptForm from './components/Pages/EncryptPage';
 import DecryptForm from './components/Pages/DecryptPage';
 import UserPage from './components/Pages/UserPage';
+import { UserProvider } from './components/UserContext/UserContext';
+import Header from './components/Header/Header';
+import Footer from './components/Footer/Footer';
 import './App.css';
 
 function App() {
   const [encryptResult, setEncryptResult] = useState('');
   const [decryptResult, setDecryptResult] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const handleSignIn = () => {
+    window.location.href = 'http://localhost:8080/google_login';
+    setIsLoggedIn(true);
+    localStorage.setItem('isLoggedIn', 'true');
+    
+  };
 
   const handleEncrypt = async (text) => {
     try {
@@ -48,17 +59,28 @@ function App() {
     }
   };
 
+  // Check if the user is already logged in on component mount
+  useEffect(() => {
+    const storedLoggedIn = localStorage.getItem('isLoggedIn');
+    if (storedLoggedIn === 'true') {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   return (
-    <Router>
-      <div className="app">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/encrypt" element={<EncryptForm onEncrypt={handleEncrypt} />} />
-          <Route path="/decrypt" element={<DecryptForm onDecrypt={handleDecrypt} />} />
-          <Route path="/user" element={<UserPage />} />
-        </Routes>
-      </div>
-    </Router>
+    <UserProvider>
+      <Router>
+        <Header isLoggedIn={isLoggedIn} onSignIn={handleSignIn} />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/encrypt" element={<EncryptForm onEncrypt={handleEncrypt} />} />
+            <Route path="/decrypt" element={<DecryptForm onDecrypt={handleDecrypt} />} />
+            <Route path="/user" element={<UserPage />} />
+          </Routes>
+        <Footer />
+      </Router>
+    </UserProvider>
+
   );
 }
 
