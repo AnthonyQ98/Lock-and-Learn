@@ -12,7 +12,7 @@ const UserPage = () => {
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const encodedData = queryParams.get('data');
-    
+
     if (encodedData) {
       try {
         const decodedData = decodeURIComponent(encodedData);

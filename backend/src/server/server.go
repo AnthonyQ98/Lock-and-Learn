@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/anthonyq98/lock-and-learn/src/auth"
@@ -33,9 +34,12 @@ func NewRouter(aesKey []byte) http.Handler {
 }
 
 func StartServer(aesKey []byte) {
+	log.Printf("Starting server on port 8080")
 	// Create a new router
 	router := NewRouter(aesKey)
 
 	// Start the server
-	http.ListenAndServe(":8080", router)
+	if err := http.ListenAndServe(":8080", router); err != nil {
+		log.Fatalf("failed to start server: %v", err)
+	}
 }
