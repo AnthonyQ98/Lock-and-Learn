@@ -20,7 +20,7 @@ const LoginCallback = () => {
       setUserContext(userData);
 
       // Redirect to the home page or profile page
-      navigate('/');
+      navigate('/profile');
     } else {
       console.error('Missing query parameters in the callback URL');
       // Handle missing parameters, e.g., redirect to an error page

@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../UserContext/UserContext'; // Adjust the import path if needed
 import SignInButton from '../Button/SignInButton';
 import './Home.css';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, setUserContext } = useUser();
 
   useEffect(() => {
     // Check if the user is logged in by checking local storage
     const userData = localStorage.getItem('userData');
     if (userData) {
-      setIsLoggedIn(true);
+      setUserContext(JSON.parse(userData));
     }
-  }, []);
+  }, [setUserContext]);
 
   const handleSignIn = () => {
     window.location.href = 'http://localhost:8080/google_login';

@@ -27,19 +27,19 @@ const Header = () => {
         <ul className="nav-list">
           {isLoggedIn ? (
             <>
-              <li className="nav-item"><Link to="/user" className="nav-link">Profile</Link></li>
+              <li className="nav-item"><Link to="/profile" className="nav-link">Profile</Link></li>
               <li className="nav-item">
-                <button className="nav-link" onClick={handleSignOut}>Sign Out</button>
+                <Link to="/" className="nav-link" onClick={handleSignOut}>Sign Out</Link>
               </li>
+              <li className="nav-item"><Link to="/encrypt" className="nav-link">Encrypt</Link></li>
+          <li className="nav-item"><Link to="/decrypt" className="nav-link">Decrypt</Link></li>
+          <li className="nav-item"><Link to="/quiz" className="nav-link">Quiz</Link></li>
             </>
           ) : (
             <li className="nav-item">
-              <button className="nav-link" onClick={handleSignIn}>Log in</button>
+              <Link className="nav-link" onClick={handleSignIn}>Log in</Link>
             </li>
           )}
-          <li className="nav-item"><Link to="/encrypt" className="nav-link">Encrypt</Link></li>
-          <li className="nav-item"><Link to="/decrypt" className="nav-link">Decrypt</Link></li>
-          <li className="nav-item"><Link to="/quiz" className="nav-link">Quiz</Link></li>
         </ul>
       </nav>
     </header>

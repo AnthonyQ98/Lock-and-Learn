@@ -76,7 +76,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/encrypt" element={<EncryptForm onEncrypt={handleEncrypt} />} />
             <Route path="/decrypt" element={<DecryptForm onDecrypt={handleDecrypt} />} />
-            <Route path="/user" element={<UserPage />} />
+            <Route path="/profile" element={<UserPage />} />
             <Route path="/login/callback" element={<LoginCallback />} />
           </Routes>
         <Footer />

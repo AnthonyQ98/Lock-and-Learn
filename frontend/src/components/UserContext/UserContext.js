@@ -6,11 +6,18 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const isLoggedIn = user !== null;
 
-  const resetUser = () => setUser(null);
-  const setUserContext = (userData) => setUser(userData);
+  const resetUser = () => {
+    setUser(null);
+    localStorage.removeItem('userData');
+  };
+
+  const setUserContext = (userData) => {
+    setUser(userData);
+    localStorage.setItem('userData', JSON.stringify(userData));
+  };
 
   return (
-    <UserContext.Provider value={{ user, setUser, resetUser, setUserContext, isLoggedIn }}>
+    <UserContext.Provider value={{ user, setUserContext, resetUser, isLoggedIn }}>
       {children}
     </UserContext.Provider>
   );
