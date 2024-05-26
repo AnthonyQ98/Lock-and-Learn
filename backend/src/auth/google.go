@@ -60,6 +60,13 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if user is in db
+
+	// if in db, get aes key
+	// if not in db, generate aes key and store user + aes key in db.
+
+	// add aeskey to url code below, adjust client code to get aes key
+
 	redirectURL := fmt.Sprintf(
 		"http://localhost:3000/login/callback?id=%s&name=%s&email=%s",
 		url.QueryEscape(googleUser.ID),
