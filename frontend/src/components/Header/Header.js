@@ -1,8 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../UserContext/UserContext';
 import './Header.css';
 
-const Header = ({ isLoggedIn, onSignIn }) => {
+const Header = () => {
+  const { isLoggedIn, resetUser } = useUser();
+  const navigate = useNavigate();
+
+  const handleSignOut = () => {
+    resetUser();
+    navigate('/'); // Redirect to home page after signing out
+  };
+
+  const handleSignIn = () => {
+    window.location.href = 'http://localhost:8080/google_login';
+  };
+
   return (
     <header className="header">
       <div className="logo-container">
@@ -13,9 +26,16 @@ const Header = ({ isLoggedIn, onSignIn }) => {
       <nav className="nav">
         <ul className="nav-list">
           {isLoggedIn ? (
-            <li className="nav-item"><Link to="/user" className="nav-link">Profile</Link></li>
+            <>
+              <li className="nav-item"><Link to="/user" className="nav-link">Profile</Link></li>
+              <li className="nav-item">
+                <button className="nav-link" onClick={handleSignOut}>Sign Out</button>
+              </li>
+            </>
           ) : (
-            <li className="nav-item"><button className="nav-link" onClick={onSignIn}>Log in</button></li>
+            <li className="nav-item">
+              <button className="nav-link" onClick={handleSignIn}>Log in</button>
+            </li>
           )}
           <li className="nav-item"><Link to="/encrypt" className="nav-link">Encrypt</Link></li>
           <li className="nav-item"><Link to="/decrypt" className="nav-link">Decrypt</Link></li>

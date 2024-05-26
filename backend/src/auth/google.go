@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -49,10 +51,30 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "JSON Parsing Failed", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("userData:", string(userData))
 
-	redirectURL := "http://localhost:3000/user?data=" + url.QueryEscape(string(userData))
+	var googleUser GoogleUser
+	err = json.Unmarshal(userData, &googleUser)
+	if err != nil {
+		http.Error(w, "JSON Unmarshal Failed", http.StatusInternalServerError)
+		return
+	}
+
+	redirectURL := fmt.Sprintf(
+		"http://localhost:3000/login/callback?id=%s&name=%s&email=%s",
+		url.QueryEscape(googleUser.ID),
+		url.QueryEscape(googleUser.Name),
+		url.QueryEscape(googleUser.Email),
+	)
 	log.Printf("Redirecturl: %s\n", redirectURL)
 
 	// Redirect to the user page with user data as query parameters
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+}
+
+// Define a struct to parse the user data JSON response
+type GoogleUser struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }

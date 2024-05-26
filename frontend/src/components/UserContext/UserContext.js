@@ -1,13 +1,19 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 
-export const UserContext = createContext(null);
+const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [userData, setUserData] = useState(null);
+  const [user, setUser] = useState(null);
+  const isLoggedIn = user !== null;
+
+  const resetUser = () => setUser(null);
+  const setUserContext = (userData) => setUser(userData);
 
   return (
-    <UserContext.Provider value={{ userData, setUserData }}>
+    <UserContext.Provider value={{ user, setUser, resetUser, setUserContext, isLoggedIn }}>
       {children}
     </UserContext.Provider>
   );
 };
+
+export const useUser = () => useContext(UserContext);

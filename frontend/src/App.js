@@ -8,6 +8,7 @@ import { UserProvider } from './components/UserContext/UserContext';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import './App.css';
+import LoginCallback from './components/LoginCallback';
 
 function App() {
   const [encryptResult, setEncryptResult] = useState('');
@@ -76,6 +77,7 @@ function App() {
             <Route path="/encrypt" element={<EncryptForm onEncrypt={handleEncrypt} />} />
             <Route path="/decrypt" element={<DecryptForm onDecrypt={handleDecrypt} />} />
             <Route path="/user" element={<UserPage />} />
+            <Route path="/login/callback" element={<LoginCallback />} />
           </Routes>
         <Footer />
       </Router>
