@@ -9,4 +9,7 @@ require (
 	golang.org/x/oauth2 v0.20.0
 )
 
-require cloud.google.com/go/compute/metadata v0.3.0 // indirect
+require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
+)

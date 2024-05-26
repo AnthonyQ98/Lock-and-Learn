@@ -2,27 +2,36 @@ package auth
 
 import (
 	"context"
+	"database/sql"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"reflect"
+	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/anthonyq98/lock-and-learn/src/config"
+	"github.com/anthonyq98/lock-and-learn/src/sqlcustom"
+	"github.com/anthonyq98/lock-and-learn/src/utils"
 )
 
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received a request to GoogleLogin handler: %v\n", r)
+	log.Println("Received a request to GoogleLogin handler")
 	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL("randomstate")
-	log.Printf("Client ID: %s\n", config.AppConfig.GoogleLoginConfig.ClientID)
-	log.Printf("url: %s\n", url)
 
 	http.Redirect(w, r, url, http.StatusSeeOther)
 }
 
+//go:embed schema.sql
+var ddl string
+
 func GoogleCallback(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received a request to GoogleCallback handler: %v", r)
+	log.Println("Received a request to GoogleCallback handler")
 	state := r.URL.Query().Get("state")
 	if state != "randomstate" {
 		http.Error(w, "States don't Match!!", http.StatusBadRequest)
@@ -51,7 +60,6 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "JSON Parsing Failed", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("userData:", string(userData))
 
 	var googleUser GoogleUser
 	err = json.Unmarshal(userData, &googleUser)
@@ -60,7 +68,42 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create a context with a timeout for querying the user
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	db, err := sql.Open("sqlite3", "my.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create tables
+	if _, err := db.ExecContext(ctx, ddl); err != nil {
+		return
+	}
+
+	queries := sqlcustom.New(db)
+
 	// Check if user is in db
+	user, err := queries.GetUser(ctx, googleUser.ID)
+	if err != nil {
+		log.Printf("error: %v", err)
+		http.Error(w, "User Query Failed", http.StatusInternalServerError)
+	}
+
+	var key string
+	if reflect.ValueOf(user).IsZero() {
+		// if user is empty
+		newUser := sqlcustom.CreateUserParams{Name: googleUser.Name, Email: googleUser.Email, Key: string(utils.GenerateAESKey())}
+		key = newUser.Key
+		_, err = queries.CreateUser(ctx, newUser)
+		if err != nil {
+			http.Error(w, "User Creation Failed", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		key = user.Key
+	}
 
 	// if in db, get aes key
 	// if not in db, generate aes key and store user + aes key in db.
@@ -68,12 +111,12 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// add aeskey to url code below, adjust client code to get aes key
 
 	redirectURL := fmt.Sprintf(
-		"http://localhost:3000/login/callback?id=%s&name=%s&email=%s",
+		"http://localhost:3000/login/callback?id=%s&name=%s&email=%s&key=%s",
 		url.QueryEscape(googleUser.ID),
 		url.QueryEscape(googleUser.Name),
 		url.QueryEscape(googleUser.Email),
+		url.QueryEscape(key),
 	)
-	log.Printf("Redirecturl: %s\n", redirectURL)
 
 	// Redirect to the user page with user data as query parameters
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)

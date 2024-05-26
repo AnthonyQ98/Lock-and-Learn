@@ -9,7 +9,7 @@ import (
 var aesKey []byte
 
 func main() {
-	aesKey = utils.GenerateAESKey(32)
+	aesKey = utils.GenerateAESKey()
 
 	config.GoogleConfig()
 	server.StartServer(aesKey)

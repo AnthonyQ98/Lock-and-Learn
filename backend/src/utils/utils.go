@@ -5,7 +5,8 @@ import (
 	"log"
 )
 
-func GenerateAESKey(length int) []byte {
+func GenerateAESKey() []byte {
+	length := 32
 	key := make([]byte, length)
 	_, err := rand.Read(key)
 	if err != nil {
