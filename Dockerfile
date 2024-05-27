@@ -1,18 +1,16 @@
-# Stage 1: Build the Go binary
 FROM golang:latest as build
 
 WORKDIR /app
-
-COPY backend/go.mod .
-COPY backend/go.sum .
-COPY backend/.env .
-
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
+COPY backend/ ./
+RUN CGO_ENABLED=1 GOOS=linux go build -o backend .
 
-COPY backend/ .
+FROM alpine:latest
 
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o backend .
-
+WORKDIR /app
+COPY --from=build /app/backend .
+COPY backend/.env .
 EXPOSE 8080
 
 CMD ["./backend"]

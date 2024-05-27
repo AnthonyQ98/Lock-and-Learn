@@ -72,13 +72,16 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	log.Printf("attempting to read db file.")
 	db, err := sql.Open("sqlite3", "my.db")
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("db file successfully found & read.")
 
 	// create tables
 	if _, err := db.ExecContext(ctx, ddl); err != nil {
+		log.Printf("error in execcontext: %v", err)
 		return
 	}
 
@@ -87,29 +90,23 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Check if user is in db
 	user, err := queries.GetUser(ctx, googleUser.ID)
 	if err != nil {
-		log.Printf("error fetching user from db: %v", err)
-		http.Error(w, "User Query Failed", http.StatusInternalServerError)
+		log.Printf("error fetching user from db : %v", err)
 	}
 
 	var key string
 	if reflect.ValueOf(user).IsZero() {
 		// if user is empty
-		newUser := sqlcustom.CreateUserParams{OauthID: googleUser.ID, Key: string(utils.GenerateAESKey()), Name: googleUser.Name, Email: googleUser.Email}
+		newUser := sqlcustom.CreateUserParams{OauthID: googleUser.ID, Key: string(utils.GenerateAESKey())}
 		key = newUser.Key
 		_, err = queries.CreateUser(ctx, newUser)
 		if err != nil {
 			log.Printf("error with user creation: %v", err)
-			http.Error(w, "User Creation Failed", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("user added to the database: %v", newUser.OauthID)
 	} else {
 		key = user.Key
 	}
-
-	// if in db, get aes key
-	// if not in db, generate aes key and store user + aes key in db.
-
-	// add aeskey to url code below, adjust client code to get aes key
 
 	redirectURL := fmt.Sprintf(
 		"http://localhost:3000/login/callback?id=%s&name=%s&email=%s&key=%s",
@@ -118,6 +115,8 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		url.QueryEscape(googleUser.Email),
 		url.QueryEscape(key),
 	)
+
+	log.Printf("redirecturl: %v", redirectURL)
 
 	// Redirect to the user page with user data as query parameters
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
