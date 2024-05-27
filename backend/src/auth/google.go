@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -81,8 +82,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	// create tables
 	if _, err := db.ExecContext(ctx, ddl); err != nil {
-		log.Printf("error in execcontext: %v", err)
-		return
+		log.Printf("ExecContext: %v", err)
 	}
 
 	queries := sqlcustom.New(db)
@@ -93,10 +93,10 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		log.Printf("error fetching user from db : %v", err)
 	}
 
-	var key string
+	var key []byte
 	if reflect.ValueOf(user).IsZero() {
 		// if user is empty
-		newUser := sqlcustom.CreateUserParams{OauthID: googleUser.ID, Key: string(utils.GenerateAESKey())}
+		newUser := sqlcustom.CreateUserParams{OauthID: googleUser.ID, Key: utils.GenerateAESKey()}
 		key = newUser.Key
 		_, err = queries.CreateUser(ctx, newUser)
 		if err != nil {
@@ -108,12 +108,14 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		key = user.Key
 	}
 
+	log.Printf("users key: %v", base64.StdEncoding.EncodeToString(key))
+
 	redirectURL := fmt.Sprintf(
 		"http://localhost:3000/login/callback?id=%s&name=%s&email=%s&key=%s",
 		url.QueryEscape(googleUser.ID),
 		url.QueryEscape(googleUser.Name),
 		url.QueryEscape(googleUser.Email),
-		url.QueryEscape(key),
+		url.QueryEscape(base64.StdEncoding.EncodeToString(key)),
 	)
 
 	log.Printf("redirecturl: %v", redirectURL)

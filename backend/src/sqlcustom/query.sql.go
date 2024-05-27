@@ -47,7 +47,7 @@ RETURNING id, oauth_id, "key"
 
 type CreateUserParams struct {
 	OauthID string
-	Key     string
+	Key     []byte
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -190,7 +190,7 @@ WHERE oauth_id = ?
 `
 
 type UpdateUserParams struct {
-	Key     string
+	Key     []byte
 	OauthID string
 }
 

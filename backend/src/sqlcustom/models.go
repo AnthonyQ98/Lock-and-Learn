@@ -16,5 +16,5 @@ type Result struct {
 type User struct {
 	ID      int64
 	OauthID string
-	Key     string
+	Key     []byte
 }

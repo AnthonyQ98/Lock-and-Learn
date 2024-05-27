@@ -1,7 +1,7 @@
 CREATE TABLE users (
   id   INTEGER PRIMARY KEY,
   oauth_id text NOT NULL,
-  key text NOT NULL
+  key BLOB NOT NULL
 );
 
 CREATE TABLE results (
