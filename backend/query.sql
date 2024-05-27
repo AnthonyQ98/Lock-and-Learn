@@ -4,23 +4,46 @@ WHERE oauth_id = ? LIMIT 1;
 
 -- name: ListUsers :many
 SELECT * FROM users
-ORDER BY name;
+ORDER BY oauth_id;
 
 -- name: CreateUser :one
 INSERT INTO users (
-  name, email, key
+  oauth_id, key
 ) VALUES (
-  ?, ?, ?
+  ?, ?
 )
 RETURNING *;
 
 -- name: UpdateUser :exec
 UPDATE users
-set name = ?,
-email = ?,
-key = ?
+set key = ?
 WHERE oauth_id = ?;
 
 -- name: DeleteUser :exec
 DELETE FROM users
+WHERE oauth_id = ?;
+
+-- name: GetResult :one
+SELECT * FROM results
+WHERE oauth_id = ? LIMIT 1;
+
+-- name: ListResults :many
+SELECT * FROM results
+ORDER BY result_start_time;
+
+-- name: CreateResult :one
+INSERT INTO results (
+  oauth_id, result, result_start_time
+) VALUES (
+  ?, ?, ?
+)
+RETURNING *;
+
+-- name: UpdateResult :exec
+UPDATE results
+set result = ?
+WHERE oauth_id = ?;
+
+-- name: DeleteResult :exec
+DELETE FROM results
 WHERE oauth_id = ?;

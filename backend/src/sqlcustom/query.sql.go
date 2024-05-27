@@ -9,32 +9,62 @@ import (
 	"context"
 )
 
-const createUser = `-- name: CreateUser :one
-INSERT INTO users (
-  name, email, key
+const createResult = `-- name: CreateResult :one
+INSERT INTO results (
+  oauth_id, result, result_start_time
 ) VALUES (
   ?, ?, ?
 )
-RETURNING id, oauth_id, name, email, "key"
+RETURNING id, result_start_time, result, oauth_id
+`
+
+type CreateResultParams struct {
+	OauthID         string
+	Result          string
+	ResultStartTime string
+}
+
+func (q *Queries) CreateResult(ctx context.Context, arg CreateResultParams) (Result, error) {
+	row := q.db.QueryRowContext(ctx, createResult, arg.OauthID, arg.Result, arg.ResultStartTime)
+	var i Result
+	err := row.Scan(
+		&i.ID,
+		&i.ResultStartTime,
+		&i.Result,
+		&i.OauthID,
+	)
+	return i, err
+}
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (
+  oauth_id, key
+) VALUES (
+  ?, ?
+)
+RETURNING id, oauth_id, "key"
 `
 
 type CreateUserParams struct {
-	Name  string
-	Email string
-	Key   string
+	OauthID string
+	Key     string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Name, arg.Email, arg.Key)
+	row := q.db.QueryRowContext(ctx, createUser, arg.OauthID, arg.Key)
 	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.OauthID,
-		&i.Name,
-		&i.Email,
-		&i.Key,
-	)
+	err := row.Scan(&i.ID, &i.OauthID, &i.Key)
 	return i, err
+}
+
+const deleteResult = `-- name: DeleteResult :exec
+DELETE FROM results
+WHERE oauth_id = ?
+`
+
+func (q *Queries) DeleteResult(ctx context.Context, oauthID string) error {
+	_, err := q.db.ExecContext(ctx, deleteResult, oauthID)
+	return err
 }
 
 const deleteUser = `-- name: DeleteUser :exec
@@ -47,44 +77,54 @@ func (q *Queries) DeleteUser(ctx context.Context, oauthID string) error {
 	return err
 }
 
+const getResult = `-- name: GetResult :one
+SELECT id, result_start_time, result, oauth_id FROM results
+WHERE oauth_id = ? LIMIT 1
+`
+
+func (q *Queries) GetResult(ctx context.Context, oauthID string) (Result, error) {
+	row := q.db.QueryRowContext(ctx, getResult, oauthID)
+	var i Result
+	err := row.Scan(
+		&i.ID,
+		&i.ResultStartTime,
+		&i.Result,
+		&i.OauthID,
+	)
+	return i, err
+}
+
 const getUser = `-- name: GetUser :one
-SELECT id, oauth_id, name, email, "key" FROM users
+SELECT id, oauth_id, "key" FROM users
 WHERE oauth_id = ? LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, oauthID string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, oauthID)
 	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.OauthID,
-		&i.Name,
-		&i.Email,
-		&i.Key,
-	)
+	err := row.Scan(&i.ID, &i.OauthID, &i.Key)
 	return i, err
 }
 
-const listUsers = `-- name: ListUsers :many
-SELECT id, oauth_id, name, email, "key" FROM users
-ORDER BY name
+const listResults = `-- name: ListResults :many
+SELECT id, result_start_time, result, oauth_id FROM results
+ORDER BY result_start_time
 `
 
-func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, listUsers)
+func (q *Queries) ListResults(ctx context.Context) ([]Result, error) {
+	rows, err := q.db.QueryContext(ctx, listResults)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []Result
 	for rows.Next() {
-		var i User
+		var i Result
 		if err := rows.Scan(
 			&i.ID,
+			&i.ResultStartTime,
+			&i.Result,
 			&i.OauthID,
-			&i.Name,
-			&i.Email,
-			&i.Key,
 		); err != nil {
 			return nil, err
 		}
@@ -99,27 +139,62 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const listUsers = `-- name: ListUsers :many
+SELECT id, oauth_id, "key" FROM users
+ORDER BY oauth_id
+`
+
+func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(&i.ID, &i.OauthID, &i.Key); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateResult = `-- name: UpdateResult :exec
+UPDATE results
+set result = ?
+WHERE oauth_id = ?
+`
+
+type UpdateResultParams struct {
+	Result  string
+	OauthID string
+}
+
+func (q *Queries) UpdateResult(ctx context.Context, arg UpdateResultParams) error {
+	_, err := q.db.ExecContext(ctx, updateResult, arg.Result, arg.OauthID)
+	return err
+}
+
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
-set name = ?,
-email = ?,
-key = ?
+set key = ?
 WHERE oauth_id = ?
 `
 
 type UpdateUserParams struct {
-	Name    string
-	Email   string
 	Key     string
 	OauthID string
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser,
-		arg.Name,
-		arg.Email,
-		arg.Key,
-		arg.OauthID,
-	)
+	_, err := q.db.ExecContext(ctx, updateUser, arg.Key, arg.OauthID)
 	return err
 }

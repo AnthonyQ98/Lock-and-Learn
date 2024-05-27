@@ -11,7 +11,7 @@ RUN go mod download
 
 COPY backend/ .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o backend .
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o backend .
 
 EXPOSE 8080
 

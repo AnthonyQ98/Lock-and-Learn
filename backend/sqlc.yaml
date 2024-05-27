@@ -2,8 +2,8 @@ version: "2"
 sql:
   - engine: "sqlite"
     queries: "query.sql"
-    schema: "src/auth/schema.sql"
+    schema: "schema.sql"
     gen:
       go:
         package: "sqlcustom"
-        out: "src/sql"
+        out: "src/sqlcustom"

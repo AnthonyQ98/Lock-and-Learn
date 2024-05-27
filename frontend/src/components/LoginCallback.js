@@ -11,9 +11,10 @@ const LoginCallback = () => {
     const id = urlParams.get('id');
     const name = urlParams.get('name');
     const email = urlParams.get('email');
+    const key = urlParams.get('key');
 
-    if (id && name && email) {
-      const userData = { id, name, email };
+    if (id && name && email && key) {
+      const userData = { id, name, email, key };
       console.log('User data from callback:', userData);
 
       // Set user context with the extracted user data

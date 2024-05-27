@@ -6,10 +6,15 @@ package sqlcustom
 
 import ()
 
+type Result struct {
+	ID              int64
+	ResultStartTime string
+	Result          string
+	OauthID         string
+}
+
 type User struct {
 	ID      int64
 	OauthID string
-	Name    string
-	Email   string
 	Key     string
 }

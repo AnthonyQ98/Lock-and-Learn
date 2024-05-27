@@ -87,17 +87,18 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Check if user is in db
 	user, err := queries.GetUser(ctx, googleUser.ID)
 	if err != nil {
-		log.Printf("error: %v", err)
+		log.Printf("error fetching user from db: %v", err)
 		http.Error(w, "User Query Failed", http.StatusInternalServerError)
 	}
 
 	var key string
 	if reflect.ValueOf(user).IsZero() {
 		// if user is empty
-		newUser := sqlcustom.CreateUserParams{Name: googleUser.Name, Email: googleUser.Email, Key: string(utils.GenerateAESKey())}
+		newUser := sqlcustom.CreateUserParams{OauthID: googleUser.ID, Key: string(utils.GenerateAESKey()), Name: googleUser.Name, Email: googleUser.Email}
 		key = newUser.Key
 		_, err = queries.CreateUser(ctx, newUser)
 		if err != nil {
+			log.Printf("error with user creation: %v", err)
 			http.Error(w, "User Creation Failed", http.StatusInternalServerError)
 			return
 		}
