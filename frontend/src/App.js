@@ -9,6 +9,9 @@ import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import './App.css';
 import LoginCallback from './components/LoginCallback';
+import LearningPlatform from './components/Pages/LearningPlatform';
+import StartQuiz from './components/Pages/StartQuizPage';
+import EndQuiz from './components/Pages/EndQuizPage';
 
 function App() {
   const [encryptResult, setEncryptResult] = useState('');
@@ -19,7 +22,6 @@ function App() {
     window.location.href = 'http://localhost:8080/google_login';
     setIsLoggedIn(true);
     localStorage.setItem('isLoggedIn', 'true');
-    
   };
 
   const handleEncrypt = async (text) => {
@@ -72,17 +74,19 @@ function App() {
     <UserProvider>
       <Router>
         <Header isLoggedIn={isLoggedIn} onSignIn={handleSignIn} />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/encrypt" element={<EncryptForm onEncrypt={handleEncrypt} />} />
-            <Route path="/decrypt" element={<DecryptForm onDecrypt={handleDecrypt} />} />
-            <Route path="/profile" element={<UserPage />} />
-            <Route path="/login/callback" element={<LoginCallback />} />
-          </Routes>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/encrypt" element={<EncryptForm onEncrypt={handleEncrypt} />} />
+          <Route path="/decrypt" element={<DecryptForm onDecrypt={handleDecrypt} />} />
+          <Route path="/learning-platform" element={<LearningPlatform />} />
+          <Route path="/start-quiz" element={<StartQuiz />} />
+          <Route path="/end-quiz" element={<EndQuiz />} />
+          <Route path="/profile" element={<UserPage />} />
+          <Route path="/login/callback" element={<LoginCallback />} />
+        </Routes>
         <Footer />
       </Router>
     </UserProvider>
-
   );
 }
 
