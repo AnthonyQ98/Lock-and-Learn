@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './QuizPages.css';
+import { useUser } from '../UserContext/UserContext';
 
 const StartQuiz = () => {
   const [quizResult, setQuizResult] = useState(null);
   const [answers, setAnswers] = useState({});
   const navigate = useNavigate();
+  const { user } = useUser();
 
   const questions = [
     {
@@ -64,14 +66,20 @@ const StartQuiz = () => {
         correctAnswersCount += 1;
       }
     });
-    const result = (correctAnswersCount / questions.length) * 100;
-    return result;
+    console.log('Correct answers count:', correctAnswersCount);
+    console.log('Total number of questions:', questions.length);
+  
+    const percentageScore = (correctAnswersCount / questions.length) * 100;
+    console.log('Percentage score:', percentageScore);
+  
+    return percentageScore;
   };
 
   const handleQuizCompletion = () => {
-    const result = calculateResult();
-    // Save result to the database
-    fetch('http://localhost:8080/start-quiz-result', {
+    const result = { result: calculateResult(), user_id: user.id, quiz_type: "start" };
+    console.log("result: ", result)
+    // Make request to quiz-result endpoint on backend with result JSON data.
+    fetch('http://localhost:8080/quiz-result', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
