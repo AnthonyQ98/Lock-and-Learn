@@ -47,7 +47,7 @@ const Home = () => {
 
   return (
     <div className="container">
-      <h1 className="title">Welcome to Lock and Learn</h1>
+      <h1 className="title">Welcome to Lock & Learn</h1>
       {!isLoggedIn ? (
         <>
           <p className="message">Please sign in to continue:</p>
