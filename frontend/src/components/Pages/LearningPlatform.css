@@ -1,0 +1,28 @@
+.learning-platform {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .navigation {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .arrow-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px 10px;
+  }
+  
+  .section {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 20px;
+  }
