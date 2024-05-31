@@ -78,6 +78,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 	log.Printf("db file successfully found & read.")
 
 	// create tables

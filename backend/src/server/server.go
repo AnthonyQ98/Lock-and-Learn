@@ -13,24 +13,30 @@ import (
 func NewRouter(aesKey []byte) http.Handler {
 	r := mux.NewRouter()
 
+	// Quiz endpoints
+	r.HandleFunc("/quiz-result", handlers.ResultHandler()).Methods("POST")
+
+	// encryption/decryption endpoints
 	r.HandleFunc("/encrypt", handlers.EncryptHandler(aesKey)).Methods("POST")
 	r.HandleFunc("/decrypt", handlers.DecryptHandler(aesKey)).Methods("POST")
+
+	// auth endpoints
 	r.HandleFunc("/google_login", auth.GoogleLogin).Methods("GET")
 	r.HandleFunc("/google_callback", auth.GoogleCallback).Methods("GET")
 
 	// Create a new CORS handler with custom options
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"}, // Allow requests from frontend domain
-		AllowedMethods:   []string{"GET", "POST"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	})
 
-	// Use the CORS handler with the router
-	r.Use(corsHandler.Handler)
+	// Wrap the router with the CORS handler
+	handler := corsHandler.Handler(r)
 
 	// Return the CORS-wrapped router
-	return r
+	return handler
 }
 
 func StartServer(aesKey []byte) {

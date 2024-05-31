@@ -11,27 +11,34 @@ import (
 
 const createResult = `-- name: CreateResult :one
 INSERT INTO results (
-  oauth_id, result, result_start_time
+  oauth_id, result, result_start_time, quiz_type
 ) VALUES (
-  ?, ?, ?
+  ?, ?, ?, ?
 )
-RETURNING id, result_start_time, result, oauth_id
+RETURNING id, result_start_time, result, oauth_id, quiz_type
 `
 
 type CreateResultParams struct {
 	OauthID         string
 	Result          string
 	ResultStartTime string
+	QuizType        string
 }
 
 func (q *Queries) CreateResult(ctx context.Context, arg CreateResultParams) (Result, error) {
-	row := q.db.QueryRowContext(ctx, createResult, arg.OauthID, arg.Result, arg.ResultStartTime)
+	row := q.db.QueryRowContext(ctx, createResult,
+		arg.OauthID,
+		arg.Result,
+		arg.ResultStartTime,
+		arg.QuizType,
+	)
 	var i Result
 	err := row.Scan(
 		&i.ID,
 		&i.ResultStartTime,
 		&i.Result,
 		&i.OauthID,
+		&i.QuizType,
 	)
 	return i, err
 }
@@ -78,7 +85,7 @@ func (q *Queries) DeleteUser(ctx context.Context, oauthID string) error {
 }
 
 const getResult = `-- name: GetResult :one
-SELECT id, result_start_time, result, oauth_id FROM results
+SELECT id, result_start_time, result, oauth_id, quiz_type FROM results
 WHERE oauth_id = ? LIMIT 1
 `
 
@@ -90,6 +97,7 @@ func (q *Queries) GetResult(ctx context.Context, oauthID string) (Result, error)
 		&i.ResultStartTime,
 		&i.Result,
 		&i.OauthID,
+		&i.QuizType,
 	)
 	return i, err
 }
@@ -107,7 +115,7 @@ func (q *Queries) GetUser(ctx context.Context, oauthID string) (User, error) {
 }
 
 const listResults = `-- name: ListResults :many
-SELECT id, result_start_time, result, oauth_id FROM results
+SELECT id, result_start_time, result, oauth_id, quiz_type FROM results
 ORDER BY result_start_time
 `
 
@@ -125,6 +133,7 @@ func (q *Queries) ListResults(ctx context.Context) ([]Result, error) {
 			&i.ResultStartTime,
 			&i.Result,
 			&i.OauthID,
+			&i.QuizType,
 		); err != nil {
 			return nil, err
 		}

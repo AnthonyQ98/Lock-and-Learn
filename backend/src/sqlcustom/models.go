@@ -11,6 +11,7 @@ type Result struct {
 	ResultStartTime string
 	Result          string
 	OauthID         string
+	QuizType        string
 }
 
 type User struct {

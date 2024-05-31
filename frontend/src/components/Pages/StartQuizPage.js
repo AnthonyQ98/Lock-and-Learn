@@ -84,7 +84,7 @@ const StartQuiz = () => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ result })
+      body: JSON.stringify(result)
     }).then(() => {
       setQuizResult(result);
       // Redirect to learning platform

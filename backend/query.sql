@@ -33,9 +33,9 @@ ORDER BY result_start_time;
 
 -- name: CreateResult :one
 INSERT INTO results (
-  oauth_id, result, result_start_time
+  oauth_id, result, result_start_time, quiz_type
 ) VALUES (
-  ?, ?, ?
+  ?, ?, ?, ?
 )
 RETURNING *;
 
