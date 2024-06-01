@@ -15,6 +15,7 @@ func NewRouter(aesKey []byte) http.Handler {
 
 	// Quiz endpoints
 	r.HandleFunc("/quiz-result", handlers.ResultHandler()).Methods("POST")
+	r.HandleFunc("/quiz-status", handlers.GetResultsHandler()).Methods("GET")
 
 	// encryption/decryption endpoints
 	r.HandleFunc("/encrypt", handlers.EncryptHandler(aesKey)).Methods("POST")

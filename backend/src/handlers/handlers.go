@@ -33,6 +33,62 @@ type QuizResult struct {
 	Result   float64 `json:"result"`
 }
 
+type QuizStatus struct {
+	QuizCompleted    bool `json:"quizCompleted"`
+	EndQuizCompleted bool `json:"endQuizCompleted"`
+}
+
+func GetResultsHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received request to GetResultsHandler")
+
+		oauthid := r.URL.Query().Get("oauthid")
+		if oauthid == "" {
+			log.Printf("Received a request for quiz results, but did not receive an oauth id")
+			return
+		}
+
+		log.Printf("oauthid: %s", oauthid)
+
+		db, err := sql.Open("sqlite3", "my.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+		log.Printf("db file successfully found & read.")
+
+		queries := sqlcustom.New(db)
+
+		// Create a context with a timeout for database operations
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		rows, err := queries.GetResult(ctx, oauthid)
+		if err != nil {
+			log.Printf("error found when fetching quiz results for user %s: %v", oauthid, err)
+		}
+
+		log.Printf("got results from db: %v", rows)
+
+		var status QuizStatus
+		for _, res := range rows {
+			if res.QuizType == "start" {
+				status.QuizCompleted = true
+			} else if res.QuizType == "end" {
+				status.EndQuizCompleted = true
+			}
+		}
+
+		log.Printf("%v", status)
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(status); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			log.Printf("Error encoding response: %v", err)
+		}
+	}
+}
+
 func ResultHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received request to ResultHandler")

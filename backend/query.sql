@@ -23,9 +23,9 @@ WHERE oauth_id = ?;
 DELETE FROM users
 WHERE oauth_id = ?;
 
--- name: GetResult :one
+-- name: GetResult :many
 SELECT * FROM results
-WHERE oauth_id = ? LIMIT 1;
+WHERE oauth_id = ?;
 
 -- name: ListResults :many
 SELECT * FROM results

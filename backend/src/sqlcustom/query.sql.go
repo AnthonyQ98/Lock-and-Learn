@@ -84,22 +84,38 @@ func (q *Queries) DeleteUser(ctx context.Context, oauthID string) error {
 	return err
 }
 
-const getResult = `-- name: GetResult :one
+const getResult = `-- name: GetResult :many
 SELECT id, result_start_time, result, oauth_id, quiz_type FROM results
-WHERE oauth_id = ? LIMIT 1
+WHERE oauth_id = ?
 `
 
-func (q *Queries) GetResult(ctx context.Context, oauthID string) (Result, error) {
-	row := q.db.QueryRowContext(ctx, getResult, oauthID)
-	var i Result
-	err := row.Scan(
-		&i.ID,
-		&i.ResultStartTime,
-		&i.Result,
-		&i.OauthID,
-		&i.QuizType,
-	)
-	return i, err
+func (q *Queries) GetResult(ctx context.Context, oauthID string) ([]Result, error) {
+	rows, err := q.db.QueryContext(ctx, getResult, oauthID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Result
+	for rows.Next() {
+		var i Result
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResultStartTime,
+			&i.Result,
+			&i.OauthID,
+			&i.QuizType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUser = `-- name: GetUser :one
