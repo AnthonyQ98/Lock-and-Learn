@@ -11,19 +11,25 @@ const Home = () => {
   const [endQuizCompleted, setEndQuizCompleted] = useState(false);
 
   useEffect(() => {
-    // Check if the user is logged in by checking local storage
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-      const parsedUserData = JSON.parse(userData);
-      setUserContext(parsedUserData);
+    console.log('useEffect triggered');
 
-      // Fetch quiz status from the server or DB
-      //fetchQuizStatus(parsedUserData.oauthid).then(status => {
-      //  setQuizCompleted(status.quizCompleted);
-      //  setEndQuizCompleted(status.endQuizCompleted);
-      //});
-    }
-  }, [setUserContext]);
+    const checkUserAndFetchStatus = async () => {
+      const userData = localStorage.getItem('userData');
+      if (userData) {
+        const parsedUserData = JSON.parse(userData);
+        console.log('Parsed user data:', parsedUserData);
+
+        setUserContext(parsedUserData);
+
+        const status = await fetchQuizStatus(user);
+        console.log('Fetched quiz status:', status);
+        setQuizCompleted(status.quizCompleted);
+        setEndQuizCompleted(status.endQuizCompleted);
+      }
+    };
+
+    checkUserAndFetchStatus();
+  }, [isLoggedIn]);
 
   const handleSignIn = () => {
     window.location.href = 'http://localhost:8080/google_login';
@@ -33,15 +39,22 @@ const Home = () => {
     navigate(path);
   };
 
-  const fetchQuizStatus = async (oauthid) => {
-    // TO BE COMPLETED
-    //const response = await fetch(`/quiz-status?oauthid=${oauthid}`); // need to implement
-    //const status = await response.json();
-    //return status;
+  const fetchQuizStatus = async (user) => {
+    try {
+      console.log("oauthid: ", user.id)
+      const response = await fetch(`http://localhost:8080/quiz-status?oauthid=${user.id}`);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const status = await response.json();
+      return status;
+    } catch (error) {
+      console.error('Error fetching quiz status:', error);
+      return { quizCompleted: false, endQuizCompleted: false };
+    }
   };
 
   const handleBeginLearning = () => {
-    // Redirect to the starting quiz page
     navigateTo('/start-quiz');
   };
 

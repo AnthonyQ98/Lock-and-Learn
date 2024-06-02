@@ -26,3 +26,46 @@
     border-radius: 5px;
     padding: 20px;
   }
+
+  .section-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .image-container {
+    position: relative;
+  }
+  
+  .image-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  .referenceText {
+    position: relative;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: small;
+  }
+  
+  .content {
+    text-align: left;
+    max-width: 800px; /* Optional: Adjust the max-width as needed */
+    margin: 0 auto; /* Optional: Center the content text */
+  }
+  
+  
+  
+  
+  
+  
+  

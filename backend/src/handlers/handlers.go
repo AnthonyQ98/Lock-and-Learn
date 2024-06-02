@@ -153,13 +153,57 @@ func OnetimeKeyHandler(aesKey []byte) http.HandlerFunc {
 	}
 }
 
+type OneTimeEncryptRequest struct {
+	Plaintext string `json:"plaintext"`
+	Key       string `json:"key"`
+}
+
+type OneTimeEncryptResponse struct {
+	CiphertextBase64 string `json:"ciphertext_base64"`
+}
+
+func OneTimeEncryptHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req OneTimeEncryptRequest
+		log.Printf("received request to one time encrypt handler")
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
+		}
+		log.Printf("decoded the request successfully")
+
+		key, err := base64.StdEncoding.DecodeString(req.Key)
+		if err != nil {
+			http.Error(w, "Invalid key encoding", http.StatusBadRequest)
+			return
+		}
+		log.Printf("decoded the key successfully")
+
+		ciphertextBase64, err := encrypt(req.Plaintext, key)
+		if err != nil {
+			http.Error(w, "Encryption failed", http.StatusInternalServerError)
+			return
+		}
+		log.Printf("encrypted the plaintext data successfully!")
+
+		res := OneTimeEncryptResponse{
+			CiphertextBase64: ciphertextBase64,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
+	}
+}
+
 // EncryptHandler returns an http.HandlerFunc that handles encryption
 func EncryptHandler(aesKey []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received request to encryptHandler")
 		var req Request
 		_ = json.NewDecoder(r.Body).Decode(&req)
-		encryptedText, err := encrypt(req.Text, aesKey)
+		encryptedText, err := encrypt(req.Text, aesKey) // temporarily not doing anything with the binary value, will change in the future when i get to that page
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
