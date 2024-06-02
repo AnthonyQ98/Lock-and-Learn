@@ -22,6 +22,14 @@ const Section = ({ title, content, image, reference }) => (
   </div>
 );
 
+const DetailBox = ({ sectionContent, onClick }) => {
+  return (
+    <button className="detail-box" onClick={() => onClick()}>
+      Want more detail? Click me to ask AI
+    </button>
+  );
+};
+
 
 const LearningPlatform = () => {
   const [currentSection, setCurrentSection] = useState(0);
@@ -29,6 +37,7 @@ const LearningPlatform = () => {
   const [encryptedTextBase64, setEncryptedTextBase64] = useState('');
   const [secretKey, setSecretKey] = useState('');
   const [isKeyGenerated, setIsKeyGenerated] = useState(false);
+  const [aiResponse, setAiResponse] = useState('');
 
   const sections = [
     {
@@ -41,9 +50,11 @@ const LearningPlatform = () => {
       content: 'The encryption process begins with selecting a strong encryption algorithm, such as AES, and generating a secret key. The plaintext data, which is the information to be protected, is then encrypted using the encryption algorithm and secret key. This produces ciphertext, which is the scrambled and unreadable form of the original data. The ciphertext can be safely transmitted or stored without revealing the original information.',
       image: "../../../../images/mind_blown.jpg",
     },
-    {title: "Choosing your encryption algorithm", content: "As you can see above... there is a lot of algorithms available. And this isn't all of them. This is step one in the encryption process. You need to pick your encryption algorithm. The most common algorithms are AES, RSA, Twofish, DES and Blowfish. \n\nToday, we will be using AES-256. This is a secure encryption algorithm. Why? Well, over time, encryption algorithms can be found to have vulnerabilities that can be exploited by attackers. DES, for example, is an algorithm that is vulnerable to brute force attacks. What does this mean? Well, lets just think of a number between 1 and 1000. Well, if you have give anyone enough time and guesses, they will be able to guess your number.\n\nSo what is this 'AES-256' and what the hell is the 256 all about? Well, lets imagine I can give you a key. A key has all these very specific grooves that allow it to unlock specific locks. A key with no grooves is not much of a key. A key with a one or two grooves is also not very secure.. but one way we can ensure our key can't be easily replicated is to make it long & complicated. That is what 256 bit keys are. Long & complicated! There is much smaller keys, however, the goal here is security, so AES-256 is currently a very secure algorithm to use.\n\nTo get a more technical understanding, AES-256 is a symmetric (ie: only one key is used for encryption & decryption) encryption algorithm that uses a 256-bit key to help convert plain text into cipher text. Cipher text being the encrypted message.\n\nDoes the above make sense? Are you an encryption expert now? No? You shouldn't be. Lets move on and look at the process in more detail!",
-    image: "../../../../images/encryption_algorithms.png",
-    reference: "Reference: https://www.researchgate.net/figure/Overview-of-the-cryptographic-encryption-algorithms_fig1_321587376"},
+    {
+      title: "Choosing your encryption algorithm", content: "As you can see above... there is a lot of algorithms available. And this isn't all of them. This is step one in the encryption process. You need to pick your encryption algorithm. The most common algorithms are AES, RSA, Twofish, DES and Blowfish. \n\nToday, we will be using AES-256. This is a secure encryption algorithm. Why? Well, over time, encryption algorithms can be found to have vulnerabilities that can be exploited by attackers. DES, for example, is an algorithm that is vulnerable to brute force attacks. What does this mean? Well, lets just think of a number between 1 and 1000. Well, if you have give anyone enough time and guesses, they will be able to guess your number.\n\nSo what is this 'AES-256' and what the hell is the 256 all about? Well, lets imagine I can give you a key. A key has all these very specific grooves that allow it to unlock specific locks. A key with no grooves is not much of a key. A key with a one or two grooves is also not very secure.. but one way we can ensure our key can't be easily replicated is to make it long & complicated. That is what 256 bit keys are. Long & complicated! There is much smaller keys, however, the goal here is security, so AES-256 is currently a very secure algorithm to use.\n\nTo get a more technical understanding, AES-256 is a symmetric (ie: only one key is used for encryption & decryption) encryption algorithm that uses a 256-bit key to help convert plain text into cipher text. Cipher text being the encrypted message.\n\nDoes the above make sense? Are you an encryption expert now? No? You shouldn't be. Lets move on and look at the process in more detail!",
+      image: "../../../../images/encryption_algorithms.png",
+      reference: "Reference: https://www.researchgate.net/figure/Overview-of-the-cryptographic-encryption-algorithms_fig1_321587376"
+    },
     {
       title: 'Encryption Process',
       content: 'So you want to send a message to the President of the United States of America. It is classified and nobody else should be able to understand it, except for Mr. President himself. You and Mr President both have the same key to the Oval Office. But nobody else does (and nobody else knows what this key looks like, or how to re-create it). Well, you can just walk right into Mr. Presidents office (if the secret service allow you) and leave the message right on his desk then walk right out and lock the door. Now, anybody who wants to come along and read your message, they need to guess your key (which wont happen if you use AES256) before they can see this message.\n\nThe encryption process begins with selecting a strong encryption algorithm, which we have just done, and generating a secret key. The plaintext data, which is the information to be protected, at a very high level is converted into a number, and then we apply some mathematical formula to it, so it is then encrypted using the encryption algorithm and secret key. This produces ciphertext, which is the scrambled and unreadable form of the original data. The ciphertext can be safely transmitted or stored without revealing the original information.\n\nSo really whats going on here is RAW_TEXT + SECRET_KEY = CIPHER_TEXT. So if a hacker comes along and they have this cipher text... or a robber comes along and they want to break into your house with a key... well... how long will that take them without the key? And in our case... the key is EXTREMELY long and complicated. The answer is... beyond our lifetime, by a long shot. This is the principle of encryption.',
@@ -61,6 +72,29 @@ const LearningPlatform = () => {
       content: 'Encryption & decryption is a very secure process of protecting data, however, it is only as secure as the key management solution in place to securely store these keys. If a malicious actor gets access to the encryption keys in use, they can easily decrypt our data, encrypt new data and behave as the original owner of that key, etc... this is why proper management of encryption keys is crucial for ensuring the security of encrypted data. Keys should be generated securely, stored in a secure key vault, and managed throughout their lifecycle. Key rotation, key revocation, and access control policies should be implemented to protect keys from unauthorized access and misuse.'
     }
   ];
+
+  const handleDetailBoxClick = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/gemini-prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sectionContent: sections[currentSection].content
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      console.log(data);
+      const content = data.content;
+      setAiResponse(content);
+    } catch (error) {
+      console.error('Error sending section content to AI:', error);
+    }
+  };
 
   const handleInputChange = (e) => {
     setInputText(e.target.value);
@@ -110,12 +144,14 @@ const LearningPlatform = () => {
   const goToNextSection = () => {
     if (currentSection < sections.length - 1) {
       setCurrentSection(currentSection + 1);
+      setAiResponse("");
     }
   };
 
   const goToPreviousSection = () => {
     if (currentSection > 0) {
       setCurrentSection(currentSection - 1);
+      setAiResponse("");
     }
   };
 
@@ -136,27 +172,37 @@ const LearningPlatform = () => {
                   value={inputText}
                   onChange={handleInputChange}
                 />
-                <br/><br/>
+                <br /><br />
                 <button onClick={handleEncrypt}>Encrypt Text</button>
-                {encryptedTextBase64 && <p>Encrypted Text (Base 64): {encryptedTextBase64}</p>}
+                {encryptedTextBase64 && <p>And here is the base64 output of your encrypted text: {encryptedTextBase64}</p>}
               </>
             )}
           </div>
         ) : (
           <Section {...sections[currentSection]} />
         )}
+
+        {currentSection != 0 && aiResponse && (
+          <div className="section">
+            <h3>AI Response (powered by Google Gemini)</h3>
+            <p>{aiResponse}</p>
+          </div>
+        )}
       </div>
       <div className="navigation">
-        {currentSection > 0 && (
-          <button className="arrow-button" onClick={goToPreviousSection}>
-            &lt; Previous
-          </button>
-        )}
-        {currentSection < sections.length - 1 && (
-          <button className="arrow-button" onClick={goToNextSection}>
-            Next &gt;
-          </button>
-        )}
+        <div className="arrow-container">
+          {currentSection > 0 && (
+            <button className="arrow-button" onClick={goToPreviousSection}>
+              &lt; Previous
+            </button>
+          )}
+          {currentSection < sections.length - 1 && (
+            <button className="arrow-button" onClick={goToNextSection}>
+              Next &gt;
+            </button>
+          )}
+        </div>
+        <button className="arrow-button" onClick={handleDetailBoxClick} >Confused? Ask AI for more info</button>
       </div>
     </div>
   );

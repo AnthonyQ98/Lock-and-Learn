@@ -11,9 +11,19 @@ import (
 
 type Config struct {
 	GoogleLoginConfig oauth2.Config
+	GeminiSecretKey   string
 }
 
 var AppConfig Config
+
+func GeminiConfig() string {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file: %s", err)
+	}
+
+	return os.Getenv("AI_SECRET_KEY")
+}
 
 func GoogleConfig() oauth2.Config {
 	err := godotenv.Load(".env")

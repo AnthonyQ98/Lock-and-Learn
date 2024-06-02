@@ -14,8 +14,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/anthonyq98/lock-and-learn/src/config"
 	"github.com/anthonyq98/lock-and-learn/src/sqlcustom"
 	"github.com/anthonyq98/lock-and-learn/src/utils"
+	"github.com/google/generative-ai-go/genai"
+	"google.golang.org/api/option"
 )
 
 type Request struct {
@@ -193,6 +196,45 @@ func OneTimeEncryptHandler() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(res); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
+	}
+}
+
+type GeminiRequest struct {
+	SectionContent string `json:"sectionContent,omitempty"`
+}
+
+func GeminiPromptHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req GeminiRequest
+		log.Printf("received request to gpt prompt handler")
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
+		}
+		log.Printf("decoded the request successfully")
+
+		ctx := context.Background()
+		client, err := genai.NewClient(ctx, option.WithAPIKey(config.GeminiConfig()))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer client.Close()
+		model := client.GenerativeModel("gemini-1.5-flash")
+		resp, err := model.GenerateContent(ctx, genai.Text("I am giving you some content.. I want you to elaborate and expand on it as if I'm a new learner to cryptography:"+req.SectionContent))
+		if err != nil {
+			log.Fatal(err)
+		}
+		content := resp.Candidates[0].Content.Parts[0]
+		log.Printf("Response: %v", resp.Candidates[0].Content.Parts[0])
+
+		response := map[string]interface{}{
+			"content": content.(genai.Text),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			return
 		}
 	}
 }

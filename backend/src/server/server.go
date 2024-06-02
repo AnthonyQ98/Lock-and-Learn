@@ -24,6 +24,7 @@ func NewRouter(aesKey []byte) http.Handler {
 	// learning platform endpoints
 	r.HandleFunc("/onetime-secret-key", handlers.OnetimeKeyHandler(aesKey)).Methods("GET")
 	r.HandleFunc("/onetime-encryption", handlers.OneTimeEncryptHandler()).Methods("POST")
+	r.HandleFunc("/gemini-prompt", handlers.GeminiPromptHandler()).Methods("POST")
 
 	// auth endpoints
 	r.HandleFunc("/google_login", auth.GoogleLogin).Methods("GET")

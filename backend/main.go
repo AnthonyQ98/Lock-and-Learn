@@ -11,6 +11,8 @@ var aesKey []byte
 func main() {
 	aesKey = utils.GenerateAESKey()
 
-	config.GoogleConfig()
+	cfg := new(config.Config)
+	cfg.GoogleLoginConfig = config.GoogleConfig()
+	cfg.GeminiSecretKey = config.GeminiConfig()
 	server.StartServer(aesKey)
 }
