@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/anthonyq98/lock-and-learn/src/sqlcustom"
+	"github.com/anthonyq98/lock-and-learn/src/utils"
 )
 
 type Request struct {
@@ -131,6 +132,24 @@ func ResultHandler() http.HandlerFunc {
 		}
 		log.Printf("result %v added to database", res)
 
+	}
+}
+
+type OneTimeKeyResponse struct {
+	Key string `json:"key,omitempty"`
+}
+
+func OnetimeKeyHandler(aesKey []byte) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received request to onetimekeyhandler")
+		tempKey := utils.GenerateAESKey()
+		base64Key := base64.StdEncoding.EncodeToString(tempKey)
+		res := OneTimeKeyResponse{Key: base64Key}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
 	}
 }
 

@@ -21,6 +21,9 @@ func NewRouter(aesKey []byte) http.Handler {
 	r.HandleFunc("/encrypt", handlers.EncryptHandler(aesKey)).Methods("POST")
 	r.HandleFunc("/decrypt", handlers.DecryptHandler(aesKey)).Methods("POST")
 
+	// learning platform endpoints
+	r.HandleFunc("/onetime-secret-key", handlers.OnetimeKeyHandler(aesKey)).Methods("GET")
+
 	// auth endpoints
 	r.HandleFunc("/google_login", auth.GoogleLogin).Methods("GET")
 	r.HandleFunc("/google_callback", auth.GoogleCallback).Methods("GET")
