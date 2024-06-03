@@ -200,6 +200,63 @@ func OneTimeEncryptHandler() http.HandlerFunc {
 	}
 }
 
+type OneTimeDecryptRequest struct {
+	Ciphertext string `json:"ciphertext"`
+	Key        string `json:"key"`
+}
+
+type OneTimeDecryptResponse struct {
+	CiphertextBase64 string `json:"plaintext"`
+}
+
+func OneTimeDecryptHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req OneTimeDecryptRequest
+		log.Printf("received request to one time decrypt handler")
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
+		}
+		log.Printf("decoded the request successfully: %v", req)
+
+		decodedCipherText, err := base64.StdEncoding.DecodeString(req.Ciphertext)
+		if err != nil {
+			log.Printf("Invalid ciphertext encoding: %v", err)
+			http.Error(w, "Invalid ciphertext encoding", http.StatusBadRequest)
+			return
+		}
+		log.Printf("received decoded cipher text: %s", decodedCipherText)
+		key, err := base64.StdEncoding.DecodeString(req.Key)
+		if err != nil {
+			log.Printf("Invalid key encoding: %v", err)
+			http.Error(w, "Invalid key encoding", http.StatusBadRequest)
+			return
+		}
+		log.Printf("received decoded key: %s", key)
+
+		plaintext, err := decrypt(decodedCipherText, key)
+		if err != nil {
+			log.Printf("Decryption failed: %v", err)
+			res := OneTimeDecryptResponse{
+				CiphertextBase64: "You broke me! I need a matching key for this cipher text.",
+			}
+			if err := json.NewEncoder(w).Encode(res); err != nil {
+				http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			}
+			return
+		}
+		log.Printf("Decrypted ciphertext successfully: %s", plaintext)
+		res := OneTimeDecryptResponse{
+			CiphertextBase64: plaintext,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		}
+	}
+}
+
 type GeminiRequest struct {
 	SectionContent string `json:"sectionContent,omitempty"`
 }
@@ -255,21 +312,23 @@ func EncryptHandler(aesKey []byte) http.HandlerFunc {
 	}
 }
 
+/*
 // DecryptHandler returns an http.HandlerFunc that handles decryption
-func DecryptHandler(aesKey []byte) http.HandlerFunc {
+//func DecryptHandler(aesKey []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received request to decryptHandler")
 		var req Request
 		_ = json.NewDecoder(r.Body).Decode(&req)
-		decryptedText, err := decrypt(req.Text, aesKey)
+		ciphertext, err := base64.RawStdEncoding.DecodeString(req.Text)
+		decryptedText, err := decrypt(ciphertext, aesKey)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		res := Response{DecryptedText: decryptedText}
+		res := Response{DecryptedText: base64.RawStdEncoding.EncodeToString(decryptedText)}
 		json.NewEncoder(w).Encode(res)
 	}
-}
+}*/
 
 func encrypt(text string, key []byte) (string, error) {
 	block, err := aes.NewCipher(key)
@@ -280,6 +339,7 @@ func encrypt(text string, key []byte) (string, error) {
 	plaintext := []byte(text)
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
+	log.Printf("iv during encryption is: %v", iv)
 
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return "", err
@@ -288,25 +348,25 @@ func encrypt(text string, key []byte) (string, error) {
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
 
-	return base64.URLEncoding.EncodeToString(ciphertext), nil
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func decrypt(cryptoText string, key []byte) (string, error) {
-	ciphertext, _ := base64.URLEncoding.DecodeString(cryptoText)
+func decrypt(cryptoText []byte, key []byte) (string, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
 
-	if len(ciphertext) < aes.BlockSize {
-		return "", err
+	if len(cryptoText) < aes.BlockSize {
+		log.Printf("cryptotext not greater than block size")
+		return "", nil
 	}
 
-	iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
+	iv := cryptoText[:aes.BlockSize]
+	cryptoText = cryptoText[aes.BlockSize:]
 
 	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(ciphertext, ciphertext)
+	stream.XORKeyStream(cryptoText, cryptoText)
 
-	return string(ciphertext), nil
+	return string(cryptoText), nil
 }

@@ -35,6 +35,8 @@ const LearningPlatform = () => {
   const [currentSection, setCurrentSection] = useState(0);
   const [inputText, setInputText] = useState('');
   const [encryptedTextBase64, setEncryptedTextBase64] = useState('');
+  const [decryptedText, setDecryptedText] = useState('');
+  const [cipherText, setCipherText] = useState('');
   const [secretKey, setSecretKey] = useState('');
   const [isKeyGenerated, setIsKeyGenerated] = useState(false);
   const [aiResponse, setAiResponse] = useState('');
@@ -100,6 +102,14 @@ const LearningPlatform = () => {
     setInputText(e.target.value);
   };
 
+  const handleCipherTextChange = (e) => {
+    setCipherText(e.target.value);
+  };
+
+  const handleSecretKeyChange = (e) => {
+    setSecretKey(e.target.value);
+  };
+
   const handleEncrypt = async () => {
     try {
       const response = await fetch('http://localhost:8080/onetime-encryption', {
@@ -109,16 +119,45 @@ const LearningPlatform = () => {
         },
         body: JSON.stringify({
           plaintext: inputText,
-          key: btoa(secretKey) // Encode the binary key to base64 before making the request to my go backend.
+          key: btoa(secretKey)
         })
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
       const data = await response.json();
-      setEncryptedTextBase64(data.ciphertext_base64);
+      console.log("data in encrypt:", data)
+      setEncryptedTextBase64(atob(data.ciphertext_base64));
+      console.log("encrypted result:", data)
+      console.log("result in binary: ", atob(data.ciphertext_base64))
+      setCipherText(atob(data.ciphertext_base64))
+      setSecretKey(secretKey)
     } catch (error) {
       console.error('Error encrypting text:', error);
+    }
+  };
+
+  const handleDecrypt = async () => {
+    const bodyReq = JSON.stringify({
+      ciphertext: btoa(cipherText), // this is base 64
+      key: btoa(secretKey)
+    })
+    console.log("body of decrypt request: ", bodyReq)
+    try {
+      const response = await fetch('http://localhost:8080/onetime-decryption', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: bodyReq
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      setDecryptedText(data.plaintext);
+    } catch (error) {
+      console.error('Error decrypting text:', error);
     }
   };
 
@@ -130,10 +169,9 @@ const LearningPlatform = () => {
       }
       const data = await response.json();
       const key = data.key; // note the key is base64 encoded during the response from the go backend.
-      const binaryKey = atob(key); // so im decoding it on the frontend after the response is successful.
-      setSecretKey(binaryKey);
+      setSecretKey(atob(key));
       setIsKeyGenerated(true);
-      console.log("temp key created: ", binaryKey)
+      console.log("temp key created: ", atob(key))
     } catch (error) {
       console.error('Error generating new secret key:', error);
       setIsKeyGenerated(false)
@@ -164,7 +202,7 @@ const LearningPlatform = () => {
             <Section {...sections[currentSection]} />
             <p>Let's get a secret key and encrypt some text.</p>
             <button onClick={generateSecretKey}>Generate Secret Key</button>
-            {secretKey && <p>Nice! Your secret key is: {secretKey}</p>}<p>Next up... lets encrypt some text using that exact secret key!</p>
+            {secretKey && <p>Nice! Your secret key is: {secretKey}</p>}{secretKey && <p>Next up... lets encrypt some text using that exact secret key!</p>}
             {isKeyGenerated && (
               <>
                 <textarea
@@ -177,6 +215,32 @@ const LearningPlatform = () => {
                 {encryptedTextBase64 && <p>And here is the base64 output of your encrypted text: {encryptedTextBase64}</p>}
               </>
             )}
+          </div>
+        ) : currentSection === 4 ? (
+          <div>
+            <Section {...sections[currentSection]} />
+            <p>We have added your secret key and cipher text that you generated from the previous slide....</p>
+            <label value={cipherText}>Cipher Text:  </label>
+            <textarea
+              placeholder="Paste your cipher text here..."
+              value={cipherText}
+              onChange={handleCipherTextChange}
+              cols={50}
+              rows={1}
+            />
+            <br /><br />
+            <label value={secretKey}>Secret Key:  </label>
+            <textarea
+              placeholder="Paste your secret key here..."
+              value={secretKey}
+              onChange={handleSecretKeyChange}
+              cols={50}
+              rows={1}
+            />
+            <br /><br />
+            <button onClick={handleDecrypt}>Decrypt Text</button>
+            {decryptedText && <p>Your decrypted text is: {decryptedText}</p>}
+            {decryptedText && <p>Play around with the above and see what happens when you delete characters from the secret key. What do you think will happen? The key won't match the same key that was used to generate the cipher text anymore...</p>}
           </div>
         ) : (
           <Section {...sections[currentSection]} />
@@ -202,9 +266,11 @@ const LearningPlatform = () => {
             </button>
           )}
         </div>
-        <button className="arrow-button" onClick={handleDetailBoxClick} >Confused? Ask AI for more info</button>
+        <button className="arrow-button" onClick={handleDetailBoxClick}>Confused? Ask AI for more info</button>
       </div>
     </div>
   );
 };
+
+
 export default LearningPlatform;

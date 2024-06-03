@@ -19,11 +19,12 @@ func NewRouter(aesKey []byte) http.Handler {
 
 	// encryption/decryption endpoints
 	r.HandleFunc("/encrypt", handlers.EncryptHandler(aesKey)).Methods("POST")
-	r.HandleFunc("/decrypt", handlers.DecryptHandler(aesKey)).Methods("POST")
+	//r.HandleFunc("/decrypt", handlers.DecryptHandler(aesKey)).Methods("POST")
 
 	// learning platform endpoints
 	r.HandleFunc("/onetime-secret-key", handlers.OnetimeKeyHandler(aesKey)).Methods("GET")
 	r.HandleFunc("/onetime-encryption", handlers.OneTimeEncryptHandler()).Methods("POST")
+	r.HandleFunc("/onetime-decryption", handlers.OneTimeDecryptHandler()).Methods("POST")
 	r.HandleFunc("/gemini-prompt", handlers.GeminiPromptHandler()).Methods("POST")
 
 	// auth endpoints
