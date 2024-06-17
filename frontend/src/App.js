@@ -12,6 +12,7 @@ import LoginCallback from './components/LoginCallback';
 import LearningPlatform from './components/Pages/LearningPlatform';
 import StartQuiz from './components/Pages/StartQuizPage';
 import EndQuiz from './components/Pages/EndQuizPage';
+import SummaryPage from './components/Pages/SummaryPage';
 
 function App() {
   const [encryptResult, setEncryptResult] = useState('');
@@ -81,6 +82,7 @@ function App() {
           <Route path="/learning-platform" element={<LearningPlatform />} />
           <Route path="/start-quiz" element={<StartQuiz />} />
           <Route path="/end-quiz" element={<EndQuiz />} />
+          <Route path="/summary" element={<SummaryPage />} />
           <Route path="/profile" element={<UserPage />} />
           <Route path="/login/callback" element={<LoginCallback />} />
         </Routes>

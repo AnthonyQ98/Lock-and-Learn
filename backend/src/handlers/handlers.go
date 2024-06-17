@@ -42,6 +42,88 @@ type QuizStatus struct {
 	EndQuizCompleted bool `json:"endQuizCompleted"`
 }
 
+type QuizSummary struct {
+	FirstQuizResult       float64 `json:"firstQuizResult"`
+	EndQuizResult         float64 `json:"endQuizResult"`
+	Difference            float64 `json:"difference"`
+	ImprovementPercentage float64 `json:"improvementPercentage"`
+}
+
+func GetSummaryHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received request to GetSummaryHandler")
+
+		oauthid := r.URL.Query().Get("oauthid")
+		if oauthid == "" {
+			log.Printf("Received a request for summary, but did not receive an oauth id")
+			return
+		}
+
+		log.Printf("oauthid: %s", oauthid)
+
+		db, err := sql.Open("sqlite3", "my.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+		log.Printf("db file successfully found & read.")
+
+		queries := sqlcustom.New(db)
+
+		// Create a context with a timeout for database operations
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		rows, err := queries.GetResult(ctx, oauthid)
+		if err != nil {
+			log.Printf("error found when fetching quiz results for user %s: %v", oauthid, err)
+		}
+
+		log.Printf("got results from db: %v", rows)
+
+		var firstQuizResult, endQuizResult float64
+		var isFirstQuizResultDone, isEndQuizResultDone bool
+		for _, res := range rows {
+			if isEndQuizResultDone && isFirstQuizResultDone {
+				break
+			}
+			score, err := strconv.ParseFloat(res.Result, 64)
+			if err != nil {
+				log.Printf("Error converting score to float: %v", err)
+				continue
+			}
+			if res.QuizType == "start" {
+				firstQuizResult = score
+				isFirstQuizResultDone = true
+			} else if res.QuizType == "end" {
+				endQuizResult = score
+				isEndQuizResultDone = true
+			}
+		}
+
+		difference := endQuizResult - firstQuizResult
+		improvementPercentage := 0.0
+		if firstQuizResult != 0 {
+			improvementPercentage = (difference / firstQuizResult) * 100
+		}
+
+		status := QuizSummary{
+			FirstQuizResult:       firstQuizResult,
+			EndQuizResult:         endQuizResult,
+			Difference:            difference,
+			ImprovementPercentage: improvementPercentage,
+		}
+
+		log.Printf("%v", status)
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(status); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			log.Printf("Error encoding response: %v", err)
+		}
+	}
+}
+
 func GetResultsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received request to GetResultsHandler")
