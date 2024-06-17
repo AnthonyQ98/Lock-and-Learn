@@ -246,7 +246,7 @@ const LearningPlatform = () => {
           <Section {...sections[currentSection]} />
         )}
 
-        {currentSection != 0 && aiResponse && (
+        {currentSection !== 0 && aiResponse && (
           <div className="section">
             <h3>AI Response (powered by Google Gemini)</h3>
             <p>{aiResponse}</p>
@@ -266,7 +266,14 @@ const LearningPlatform = () => {
             </button>
           )}
         </div>
-        <button className="arrow-button" onClick={handleDetailBoxClick}>Confused? Ask AI for more info</button>
+        {currentSection !== 0 && (
+          <button className="arrow-button" onClick={handleDetailBoxClick}>Confused? Ask AI for more info</button>
+        )}
+        {currentSection === sections.length - 1 && (
+          <button className="arrow-button">
+            Complete the final quiz
+          </button>
+        )}
       </div>
     </div>
   );
