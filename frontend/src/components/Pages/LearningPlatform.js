@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import './LearningPlatform.css';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Section = ({ title, content, image, reference }) => (
   <div className="section-container">
@@ -40,6 +42,7 @@ const LearningPlatform = () => {
   const [secretKey, setSecretKey] = useState('');
   const [isKeyGenerated, setIsKeyGenerated] = useState(false);
   const [aiResponse, setAiResponse] = useState('');
+  const navigate = useNavigate();
 
   const sections = [
     {
@@ -76,6 +79,29 @@ const LearningPlatform = () => {
   ];
 
   const handleDetailBoxClick = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/gemini-prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sectionContent: sections[currentSection].content
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      console.log(data);
+      const content = data.content;
+      setAiResponse(content);
+    } catch (error) {
+      console.error('Error sending section content to AI:', error);
+    }
+  };
+
+  const handleCompletedButtonClick = async () => {
     try {
       const response = await fetch('http://localhost:8080/gemini-prompt', {
         method: 'POST',
@@ -270,8 +296,8 @@ const LearningPlatform = () => {
           <button className="arrow-button" onClick={handleDetailBoxClick}>Confused? Ask AI for more info</button>
         )}
         {currentSection === sections.length - 1 && (
-          <button className="arrow-button">
-            Complete the final quiz
+          <button className="arrow-button" onClick={navigate("/end-quiz")}>
+            <a href="/end-quiz" style={{ textDecoration: 'none', color: 'inherit', display: 'block', width: '100%', height: '100%' }}>Complete the final quiz</a>
           </button>
         )}
       </div>
