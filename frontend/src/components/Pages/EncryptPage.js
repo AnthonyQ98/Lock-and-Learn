@@ -6,7 +6,6 @@ const EncryptPage = ({ onEncrypt }) => {
   const [text, setText] = useState('');
   const [encryptedTextBase64, setEncryptedTextBase64] = useState('');
   const [cipherText, setCipherText] = useState('');
-  const [secretKey, setSecretKey] = useState('');
   const [inputText, setInputText] = useState('');
   const { user } = useUser();
   const [textToEncrypt, setTextToEncrypt] = useState('');
@@ -47,7 +46,7 @@ const EncryptPage = ({ onEncrypt }) => {
 
   return (
     <div className="container">
-      <h2 className="title">Encrypt & Learn</h2>
+      <h2 className="title">Encrypt</h2>
 
       <form onSubmit={handleSubmit} className="form">
         <input
