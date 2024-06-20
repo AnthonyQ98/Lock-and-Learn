@@ -297,7 +297,7 @@ const LearningPlatform = () => {
         )}
         {currentSection === sections.length - 1 && (
           <button className="arrow-button" onClick={navigate("/end-quiz")}>
-            <a href="/end-quiz" style={{ textDecoration: 'none', color: 'inherit', display: 'block', width: '100%', height: '100%' }}>Complete the final quiz</a>
+            Complete the final quiz
           </button>
         )}
       </div>

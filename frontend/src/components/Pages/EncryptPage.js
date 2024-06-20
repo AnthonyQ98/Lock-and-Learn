@@ -1,37 +1,67 @@
 import React, { useState } from 'react';
 import './EncryptPage.css';
+import { useUser } from '../UserContext/UserContext';
 
 const EncryptPage = ({ onEncrypt }) => {
   const [text, setText] = useState('');
+  const [encryptedTextBase64, setEncryptedTextBase64] = useState('');
+  const [cipherText, setCipherText] = useState('');
+  const [secretKey, setSecretKey] = useState('');
+  const [inputText, setInputText] = useState('');
+  const { user } = useUser();
+  const [textToEncrypt, setTextToEncrypt] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onEncrypt(text);
+    setTextToEncrypt(inputText);
+  };
+
+  const handleEncrypt = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/encrypt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          plaintext: inputText,
+          user: user.id,
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      console.log("data in encrypt:", data)
+      setEncryptedTextBase64(atob(data.encryptedText));
+      console.log("encrypted result:", data)
+      setCipherText(atob(data.encryptedText))
+    } catch (error) {
+      console.error('Error encrypting text:', error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
   };
 
   return (
     <div className="container">
       <h2 className="title">Encrypt & Learn</h2>
 
-      {/* NEED TO ADD LEARNING PLATFORM DIALOGS TO EXPLAIN THE ENCRYPTION
-      
-      1. Check if user has encrypted before (check db against their oauth id)
-      2. Is there an entry? If so, allow them to encrypt + show learning
-      3. Is there not an entry in the db? Direct them to do the quiz first.
-      4. tbd
-      
-      */}
-
       <form onSubmit={handleSubmit} className="form">
         <input
           type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          value={inputText}
+          onChange={handleInputChange}
           placeholder="Enter text to encrypt"
           className="input"
         />
-        <button type="submit" className="button">Encrypt</button>
+        <button type="submit" className="button" onClick={handleEncrypt}>Encrypt</button>
       </form>
+
+      {encryptedTextBase64 && <p>Your text {textToEncrypt} has been successfully encrypted! Your encrypted text is: {encryptedTextBase64}</p>}
+      <p></p>
     </div>
   );
 };
