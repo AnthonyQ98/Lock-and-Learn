@@ -4,9 +4,7 @@ import { useUser } from '../UserContext/UserContext';
 import { useNavigate } from 'react-router-dom';
 
 const EncryptPage = ({ onEncrypt }) => {
-  const [text, setText] = useState('');
   const [encryptedTextBase64, setEncryptedTextBase64] = useState('');
-  const [cipherText, setCipherText] = useState('');
   const [inputText, setInputText] = useState('');
   const { user } = useUser();
   const [textToEncrypt, setTextToEncrypt] = useState('');
@@ -45,13 +43,6 @@ const EncryptPage = ({ onEncrypt }) => {
         console.error('Error encrypting text:', error);
     }
 };
-
-function b64DecodeUnicode(str) {
-  // Going backwards: from bytestream, to percent-encoding, to original string.
-  return decodeURIComponent(atob(str).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
-}
 
   const handleInputChange = (e) => {
     setInputText(e.target.value);
