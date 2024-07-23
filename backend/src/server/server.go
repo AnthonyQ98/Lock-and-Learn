@@ -34,6 +34,9 @@ func NewRouter(aesKey []byte) http.Handler {
 	r.HandleFunc("/google_login", auth.GoogleLogin).Methods("GET")
 	r.HandleFunc("/google_callback", auth.GoogleCallback).Methods("GET")
 
+	// get aes key endpoint
+	r.HandleFunc("/key", handlers.KeyHandler()).Methods("POST")
+
 	// Create a new CORS handler with custom options
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"}, // Allow requests from frontend domain

@@ -377,7 +377,7 @@ func GeminiPromptHandler() http.HandlerFunc {
 		}
 		defer client.Close()
 		model := client.GenerativeModel("gemini-1.5-flash")
-		resp, err := model.GenerateContent(ctx, genai.Text("I am giving you some content.. I want you to elaborate and expand on it as if I'm a new learner to cryptography:"+req.SectionContent))
+		resp, err := model.GenerateContent(ctx, genai.Text("I am giving you some content.. I want you to elaborate and expand on it as if I'm a new learner to cryptography. You MUST return the format in HTML text tags (using p tags, h1 tags, h2 tags, inline css, etc - EXCLUDE the base tags such as html, doctype, etc):"+req.SectionContent))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -390,6 +390,62 @@ func GeminiPromptHandler() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+type KeyRequest struct {
+	Id string `json:"id"`
+}
+
+type KeyResponse struct {
+	Key string `json:"key"`
+}
+
+// KeyHandler returns an http.HandlerFunc that handles key retrieval
+func KeyHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received request to keyHandler")
+
+		var req KeyRequest
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			log.Printf("Error decoding request: %v", err)
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+
+		log.Printf("request to keyHandler: %v", req)
+
+		db, err := sql.Open("sqlite3", "my.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+		log.Printf("db file successfully found & read.")
+
+		queries := sqlcustom.New(db)
+
+		// Create a context with a timeout for database operations
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		user, err := queries.GetUser(ctx, req.Id)
+		if err != nil {
+			log.Printf("error found when fetching user %s: %v", req.Id, err)
+			http.Error(w, "User not found", http.StatusNotFound)
+			return
+		}
+
+		log.Printf("User key: %v", user.Key)
+
+		res := KeyResponse{Key: string(user.Key)}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			log.Printf("Error encoding response: %v", err)
+			http.Error(w, "Error encoding response", http.StatusInternalServerError)
 			return
 		}
 	}

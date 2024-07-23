@@ -75,8 +75,8 @@ const Home = () => {
             <>
               {endQuizCompleted ? (
                 <>
-                  <button onClick={() => navigateTo('/encrypt')}>Encrypt & Learn</button>
-                  <button onClick={() => navigateTo('/decrypt')}>Decrypt & Learn</button>
+                  <button onClick={() => navigateTo('/encrypt')}>Encrypt</button>
+                  <button onClick={() => navigateTo('/decrypt')}>Decrypt</button>
                 </>
               ) : (
                 <>
@@ -85,7 +85,7 @@ const Home = () => {
                 </>
 
               )}
-              <button onClick={() => navigateTo('/user')}>User Page</button>
+              <button onClick={() => navigateTo('/profile')}>View Profile</button>
             </>
           )}
         </div>
