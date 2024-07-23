@@ -47,6 +47,8 @@ type QuizSummary struct {
 	EndQuizResult         float64 `json:"endQuizResult"`
 	Difference            float64 `json:"difference"`
 	ImprovementPercentage float64 `json:"improvementPercentage"`
+	FirstQuizStartTime    string  `json:"firstQuizStartTime`
+	EndQuizStartTime      string  `json:"endQuizStartTime`
 }
 
 func GetSummaryHandler() http.HandlerFunc {
@@ -83,6 +85,7 @@ func GetSummaryHandler() http.HandlerFunc {
 
 		var firstQuizResult, endQuizResult float64
 		var isFirstQuizResultDone, isEndQuizResultDone bool
+		var firstQuizTime, endQuizTime string
 		for _, res := range rows {
 			if isEndQuizResultDone && isFirstQuizResultDone {
 				break
@@ -93,9 +96,11 @@ func GetSummaryHandler() http.HandlerFunc {
 				continue
 			}
 			if res.QuizType == "start" {
+				firstQuizTime = res.ResultStartTime
 				firstQuizResult = score
 				isFirstQuizResultDone = true
 			} else if res.QuizType == "end" {
+				endQuizTime = res.ResultStartTime
 				endQuizResult = score
 				isEndQuizResultDone = true
 			}
@@ -112,6 +117,8 @@ func GetSummaryHandler() http.HandlerFunc {
 			EndQuizResult:         endQuizResult,
 			Difference:            difference,
 			ImprovementPercentage: improvementPercentage,
+			FirstQuizStartTime:    firstQuizTime,
+			EndQuizStartTime:      endQuizTime,
 		}
 
 		log.Printf("%v", status)
@@ -238,18 +245,23 @@ func OnetimeKeyHandler(aesKey []byte) http.HandlerFunc {
 	}
 }
 
-type OneTimeEncryptRequest struct {
+type EncryptRequest struct {
 	Plaintext string `json:"plaintext"`
 	Key       string `json:"key"`
 }
 
-type OneTimeEncryptResponse struct {
+type EncryptRequestId struct {
+	Plaintext string `json:"plaintext"`
+	Id        string `json:"user"`
+}
+
+type EncryptResponse struct {
 	CiphertextBase64 string `json:"ciphertext_base64"`
 }
 
 func OneTimeEncryptHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req OneTimeEncryptRequest
+		var req EncryptRequest
 		log.Printf("received request to one time encrypt handler")
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -271,7 +283,7 @@ func OneTimeEncryptHandler() http.HandlerFunc {
 		}
 		log.Printf("encrypted the plaintext data successfully!")
 
-		res := OneTimeEncryptResponse{
+		res := EncryptResponse{
 			CiphertextBase64: ciphertextBase64,
 		}
 
@@ -282,18 +294,23 @@ func OneTimeEncryptHandler() http.HandlerFunc {
 	}
 }
 
-type OneTimeDecryptRequest struct {
+type DecryptRequest struct {
 	Ciphertext string `json:"ciphertext"`
 	Key        string `json:"key"`
 }
 
-type OneTimeDecryptResponse struct {
+type DecryptRequestId struct {
+	Ciphertext string `json:"ciphertext"`
+	Id         string `json:"user"`
+}
+
+type DecryptResponse struct {
 	CiphertextBase64 string `json:"plaintext"`
 }
 
 func OneTimeDecryptHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req OneTimeDecryptRequest
+		var req DecryptRequest
 		log.Printf("received request to one time decrypt handler")
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -319,7 +336,7 @@ func OneTimeDecryptHandler() http.HandlerFunc {
 		plaintext, err := decrypt(decodedCipherText, key)
 		if err != nil {
 			log.Printf("Decryption failed: %v", err)
-			res := OneTimeDecryptResponse{
+			res := DecryptResponse{
 				CiphertextBase64: "You broke me! I need a matching key for this cipher text.",
 			}
 			if err := json.NewEncoder(w).Encode(res); err != nil {
@@ -328,7 +345,7 @@ func OneTimeDecryptHandler() http.HandlerFunc {
 			return
 		}
 		log.Printf("Decrypted ciphertext successfully: %s", plaintext)
-		res := OneTimeDecryptResponse{
+		res := DecryptResponse{
 			CiphertextBase64: plaintext,
 		}
 
@@ -382,35 +399,106 @@ func GeminiPromptHandler() http.HandlerFunc {
 func EncryptHandler(aesKey []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received request to encryptHandler")
-		var req Request
-		_ = json.NewDecoder(r.Body).Decode(&req)
-		encryptedText, err := encrypt(req.Text, aesKey) // temporarily not doing anything with the binary value, will change in the future when i get to that page
+
+		var req EncryptRequestId
+		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
+			log.Printf("Error decoding request: %v", err)
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+
+		log.Printf("request to encrypthandler: %v", req)
+
+		db, err := sql.Open("sqlite3", "my.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+		log.Printf("db file successfully found & read.")
+
+		queries := sqlcustom.New(db)
+
+		// Create a context with a timeout for database operations
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		user, err := queries.GetUser(ctx, req.Id)
+		if err != nil {
+			log.Printf("error found when fetching user %s: %v", req.Id, err)
+		}
+
+		log.Printf("Request payload: %v", req)
+
+		encryptedText, err := encrypt(req.Plaintext, user.Key)
+		if err != nil {
+			log.Printf("Error encrypting text: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		res := Response{EncryptedText: encryptedText}
-		json.NewEncoder(w).Encode(res)
+
+		log.Printf("Encrypted text (base64): %v", encryptedText)
+
+		res := EncryptResponse{CiphertextBase64: encryptedText}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			log.Printf("Error encoding response: %v", err)
+			http.Error(w, "Error encoding response", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
-/*
 // DecryptHandler returns an http.HandlerFunc that handles decryption
-//func DecryptHandler(aesKey []byte) http.HandlerFunc {
+func DecryptHandler(aesKey []byte) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received request to decryptHandler")
-		var req Request
-		_ = json.NewDecoder(r.Body).Decode(&req)
-		ciphertext, err := base64.RawStdEncoding.DecodeString(req.Text)
-		decryptedText, err := decrypt(ciphertext, aesKey)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		var req DecryptRequestId
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Printf("Invalid request payload: %v", http.StatusBadRequest)
 			return
 		}
-		res := Response{DecryptedText: base64.RawStdEncoding.EncodeToString(decryptedText)}
+
+		log.Printf("Decoded request: %v", req)
+
+		db, err := sql.Open("sqlite3", "my.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+		log.Printf("db file successfully found & read.")
+
+		queries := sqlcustom.New(db)
+
+		// Create a context with a timeout for database operations
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		user, err := queries.GetUser(ctx, req.Id)
+		if err != nil {
+			log.Printf("error found when fetching user %s: %v", req.Id, err)
+		}
+
+		ciphertext, err := base64.RawStdEncoding.DecodeString(req.Ciphertext)
+		if err != nil {
+			log.Printf("Invalid base64 string: %v", http.StatusBadRequest)
+			return
+		}
+
+		log.Printf("Ciphertext decoded: %v", ciphertext)
+
+		decryptedText, err := decrypt(ciphertext, user.Key)
+		if err != nil {
+			log.Printf(err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		log.Printf("Decrypted text: %v", decryptedText)
+
+		res := DecryptResponse{CiphertextBase64: base64.StdEncoding.EncodeToString([]byte(decryptedText))}
 		json.NewEncoder(w).Encode(res)
 	}
-}*/
+}
 
 func encrypt(text string, key []byte) (string, error) {
 	block, err := aes.NewCipher(key)
@@ -430,6 +518,7 @@ func encrypt(text string, key []byte) (string, error) {
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
 
+	log.Printf("encrypted text: %v", string(ciphertext))
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 

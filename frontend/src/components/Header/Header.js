@@ -32,8 +32,7 @@ const Header = () => {
                 <Link to="/" className="nav-link" onClick={handleSignOut}>Sign Out</Link>
               </li>
               <li className="nav-item"><Link to="/encrypt" className="nav-link">Encrypt</Link></li>
-          <li className="nav-item"><Link to="/decrypt" className="nav-link">Decrypt</Link></li>
-          <li className="nav-item"><Link to="/quiz" className="nav-link">Quiz</Link></li>
+              <li className="nav-item"><Link to="/decrypt" className="nav-link">Decrypt</Link></li>
             </>
           ) : (
             <li className="nav-item">

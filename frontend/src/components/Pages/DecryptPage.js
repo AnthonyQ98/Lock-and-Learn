@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './DecryptPage.css';
 import { useUser } from '../UserContext/UserContext';
+import { useNavigate } from 'react-router-dom';
 
 const DecryptPage = ({ onDecrypt }) => {
   const [text, setText] = useState('');
@@ -9,6 +10,7 @@ const DecryptPage = ({ onDecrypt }) => {
   const [inputText, setInputText] = useState('');
   const { user } = useUser();
   const [textToDecrypt, setTextToDecrypt] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -32,9 +34,9 @@ const DecryptPage = ({ onDecrypt }) => {
       }
       const data = await response.json();
       console.log("data in decrypt:", data)
-      setDecryptedText(atob(data.decryptedText));
+      setDecryptedText(atob(data.plaintext));
       console.log("decrypted result:", data)
-      setCipherText(atob(data.decryptedText))
+      setCipherText(atob(data.plaintext))
     } catch (error) {
       console.error('Error decrypt text:', error);
     }
@@ -42,6 +44,10 @@ const DecryptPage = ({ onDecrypt }) => {
 
   const handleInputChange = (e) => {
     setInputText(e.target.value);
+  };
+
+  const navigateToEncrypt = () => {
+    navigate("/encrypt")
   };
 
   return (
@@ -59,7 +65,11 @@ const DecryptPage = ({ onDecrypt }) => {
         <button type="submit" className="button" onClick={handleDecrypt}>Decrypt</button>
       </form>
 
-      {decryptedText && <p>Your cipher text {textToDecrypt} has been successfully decrypted! Your decrypted text is: {decryptedText}</p>}
+      {decryptedText && (
+      <div>
+      <p>Your cipher text {textToDecrypt} has been successfully decrypted! Your decrypted text is: {decryptedText}</p>
+      <button className="button" onClick={navigateToEncrypt}>Encrypt more text</button>
+      </div>)}
       <p></p>
     </div>
   );

@@ -22,7 +22,7 @@ func NewRouter(aesKey []byte) http.Handler {
 
 	// encryption/decryption endpoints
 	r.HandleFunc("/encrypt", handlers.EncryptHandler(aesKey)).Methods("POST")
-	//r.HandleFunc("/decrypt", handlers.DecryptHandler(aesKey)).Methods("POST")
+	r.HandleFunc("/decrypt", handlers.DecryptHandler(aesKey)).Methods("POST")
 
 	// learning platform endpoints
 	r.HandleFunc("/onetime-secret-key", handlers.OnetimeKeyHandler(aesKey)).Methods("GET")

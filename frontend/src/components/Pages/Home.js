@@ -47,6 +47,7 @@ const Home = () => {
         throw new Error('Network response was not ok');
       }
       const status = await response.json();
+      console.log("status", status)
       return status;
     } catch (error) {
       console.error('Error fetching quiz status:', error);
@@ -72,14 +73,17 @@ const Home = () => {
             <button onClick={handleBeginLearning}>Begin Learning</button>
           ) : (
             <>
-              <button onClick={() => navigateTo('/learning-platform')}>Continue Learning</button>
               {endQuizCompleted ? (
                 <>
                   <button onClick={() => navigateTo('/encrypt')}>Encrypt & Learn</button>
                   <button onClick={() => navigateTo('/decrypt')}>Decrypt & Learn</button>
                 </>
               ) : (
-                <button onClick={() => navigateTo('/end-quiz')}>Complete End Quiz</button>
+                <>
+                  <button onClick={() => navigateTo('/learning-platform')}>Continue Learning</button>
+                  <button onClick={() => navigateTo('/end-quiz')}>Complete End Quiz</button>
+                </>
+
               )}
               <button onClick={() => navigateTo('/user')}>User Page</button>
             </>
